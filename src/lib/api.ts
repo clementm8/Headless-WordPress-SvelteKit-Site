@@ -1,6 +1,5 @@
+import { WP_GRAPHQL_URL, WP_AUTH_USER, WP_AUTH_PASSWORD } from '$env/static/private';
 import type { CardsResponse } from './types';
-
-const WP_GRAPHQL_URL = 'http://localhost:8881/graphql'; 
 
 const GET_CARDS = `
   query GetCards {
@@ -27,6 +26,18 @@ const GET_CARDS = `
   }
 `;
 
+function getAuthHeaders(): Record<string, string> {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+
+  if (WP_AUTH_USER && WP_AUTH_PASSWORD) {
+    const credentials = Buffer.from(`${WP_AUTH_USER}:${WP_AUTH_PASSWORD}`).toString('base64');
+    headers['Authorization'] = `Basic ${credentials}`;
+  }
+
+  return headers;
+}
 
 /**
  * Generic function to execute GraphQL queries
@@ -40,9 +51,7 @@ async function fetchGraphQL<T>(
 ): Promise<T> {
   const response = await fetch(WP_GRAPHQL_URL, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: getAuthHeaders(),
     body: JSON.stringify({
       query,
       variables: variables || {},
